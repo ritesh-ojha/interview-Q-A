@@ -141,3 +141,30 @@
     Total Sales All = CALCULATE(SUM(Sales[Amount]), ALL(Sales))
     ```
     - Explanation: This measure will calculate the total sales amount by removing all filters from the Sales table.
+
+### 15. CALCULATETABLE()
+- Purpose: Evaluates a table expression in a context that can be modified by filters.
+- Syntax: CALCULATETABLE(Table, Filter1, Filter2, ...)
+- Example:
+    - Scenario: Top 10 Products by Sales Amount
+    - Usage:
+    ```
+    Top10Products = 
+    CALCULATETABLE(
+        TOPN(
+            10,
+            SUMMARIZE(
+                Sales,
+                Sales[ProductID],
+                "TotalSalesAmount", [Total Sales]
+            ),
+            [TotalSalesAmount], DESC
+        )
+    )
+
+    ```
+    - Explanation:
+
+        - `SUMMARIZE`: This function creates a summary table that groups by ProductID and calculates the total sales amount for each product.
+        - `TOPN`: This function returns the top N rows of the summarized table based on the TotalSalesAmount in descending order.
+        - `CALCULATETABLE`: This function is used to apply the filter context and return the new table.
