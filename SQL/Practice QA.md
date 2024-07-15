@@ -61,3 +61,37 @@ GROUP BY d.department_name;
 - GROUP BY:
 
     - The GROUP BY d.department_name groups the results by department, allowing us to calculate the average salary for each department.
+
+### Question:
+You have three tables: employees, departments, and projects.
+
+- employees(employee_id, employee_name, department_id, salary)
+- departments(department_id, department_name)
+- projects(project_id, project_name, budget)
+
+Each employee can be assigned to multiple projects through the employee_projects table:
+
+- employee_projects(employee_id, project_id)
+
+Write a SQL query to find the total salary of employees assigned to each project, along with the project name and budget. Include projects with no employees assigned, showing a total salary of 0 for those projects.
+
+### Answer:
+```SQL
+SELECT p.project_name, p.budget, COALESCE(SUM(e.salary), 0) AS total_salary
+FROM projects p
+LEFT JOIN employee_projects ep ON p.project_id = ep.project_id
+LEFT JOIN employees e ON ep.employee_id = e.employee_id
+GROUP BY p.project_name, p.budget;
+```
+
+### Explanation
+- LEFT JOIN:
+
+    - The first LEFT JOIN between projects (p) and employee_projects (ep) ensures that all projects are included, even those without assigned employees.
+    - The second LEFT JOIN between employee_projects (ep) and employees (e) brings in employee details, including their salary.
+- COALESCE:
+
+    - The COALESCE function is used to return 0 when there are no employees assigned to a project (i.e., when SUM(e.salary) is NULL).
+- GROUP BY:
+
+    - The GROUP BY p.project_name, p.budget groups the results by project name and budget, allowing us to calculate the total salary for each project.
