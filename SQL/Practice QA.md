@@ -31,6 +31,7 @@ WHERE e.salary = (
     - It selects the department_name from the departments table, and the employee_name and salary from the employees table.
 
     - The WHERE clause ensures that only the employees with the maximum salary in their respective departments are selected by matching the employee’s salary with the result of the inner query.
+---------------------------------------------------------
 
 ### Question:
 
@@ -62,6 +63,7 @@ GROUP BY d.department_name;
 
     - The GROUP BY d.department_name groups the results by department, allowing us to calculate the average salary for each department.
 
+-----------------------------------
 ### Question:
 You have three tables: employees, departments, and projects.
 
@@ -95,3 +97,84 @@ GROUP BY p.project_name, p.budget;
 - GROUP BY:
 
     - The GROUP BY p.project_name, p.budget groups the results by project name and budget, allowing us to calculate the total salary for each project.
+
+----------------------------
+### Question:
+
+Given the tables employees, departments, and projects:
+
+- employees(employee_id, employee_name, department_id, salary)
+- departments(department_id, department_name)
+- projects(project_id, project_name, budget)
+
+Each employee can be assigned to multiple projects through the employee_projects table:
+
+- employee_projects(employee_id, project_id)
+
+Write a SQL query to find the highest-paid employee in each project, along with their project name, project budget, and the average salary of employees in the same department as the highest-paid employee for that project.
+
+### Answer:
+
+```sql
+WITH ProjectSalaries AS (
+    SELECT 
+        ep.project_id,
+        e.employee_id,
+        e.salary,
+        ROW_NUMBER() OVER (PARTITION BY ep.project_id ORDER BY e.salary DESC) AS rank
+    FROM 
+        employee_projects ep
+    JOIN 
+        employees e ON ep.employee_id = e.employee_id
+),
+HighestPaidEmployees AS (
+    SELECT 
+        ps.project_id,
+        ps.employee_id,
+        ps.salary AS highest_salary
+    FROM 
+        ProjectSalaries ps
+    WHERE 
+        ps.rank = 1
+),
+DepartmentAverageSalaries AS (
+    SELECT
+        e.department_id,
+        AVG(e.salary) AS avg_department_salary
+    FROM
+        employees e
+    GROUP BY
+        e.department_id
+)
+SELECT 
+    p.project_name,
+    p.budget,
+    e.employee_name AS highest_paid_employee,
+    hpe.highest_salary,
+    das.avg_department_salary
+FROM 
+    HighestPaidEmployees hpe
+JOIN 
+    employees e ON hpe.employee_id = e.employee_id
+JOIN 
+    projects p ON hpe.project_id = p.project_id
+JOIN 
+    DepartmentAverageSalaries das ON e.department_id = das.department_id;
+```
+
+### Explanation:
+- CTE: ProjectSalaries:
+
+    - This common table expression (CTE) calculates the salary for each employee assigned to each project and ranks them by salary within each project using ROW_NUMBER().
+- CTE: HighestPaidEmployees:
+
+    - This CTE selects the highest-paid employee for each project by filtering where rank = 1.
+- CTE: DepartmentAverageSalaries:
+
+    - This CTE calculates the average salary for each department.
+- Final SELECT Statement:
+
+    - Joins the highest-paid employees with the employees, projects, and DepartmentAverageSalaries tables to get the required details:
+    - project_name and budget from projects.
+    - employee_name and highest_salary from employees and HighestPaidEmployees.
+    - avg_department_salary from DepartmentAverageSalaries.
